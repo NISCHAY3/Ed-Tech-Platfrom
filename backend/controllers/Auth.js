@@ -256,15 +256,87 @@ exports.login = async (req, res) => {
 //change password
 exports.changePassword = async (req, res) => {
     try {
-        //get data from req.body 
-        //get old password, new password, confirm password
-        //validation
-        //update pwd in DB
-        //seand email =password Updated
-        //return response
+        // extract data
+        const { oldPassword, newPassword, confirmNewPassword } = req.body;
 
+        // validation
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
+            return res.status(403).json({
+                success: false,
+                message: 'All fileds are required'
+            });
+        }
+
+        // get user
+        const userDetails = await User.findById(req.user.id);
+
+        // validate old passowrd entered correct or not
+        const isPasswordMatch = await bcrypt.compare(
+            oldPassword,
+            userDetails.password
+        )
+
+        // if old password not match 
+        if (!isPasswordMatch) {
+            return res.status(401).json({
+                success: false, message: "Old password is Incorrect"
+            });
+        }
+
+        // check both passwords are matched
+        if (newPassword !== confirmNewPassword) {
+            return res.status(403).json({
+                success: false,
+                message: 'The password and confirm password do not match'
+            })
+        }
+
+
+        // hash password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // update in DB
+        const updatedUserDetails = await User.findByIdAndUpdate(req.user.id,
+            { password: hashedPassword },
+            { new: true });
+
+
+        // send email
+        try {
+            const emailResponse = await mailSender(
+                updatedUserDetails.email,
+                'Password for your account has been updated',
+                passwordUpdated(
+                    updatedUserDetails.email,
+                    `Password updated successfully for ${updatedUserDetails.firstName} ${updatedUserDetails.lastName}`
+                )
+            );
+
+        }
+        catch (error) {
+            console.error("Error occurred while sending email:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Error occurred while sending email",
+                error: error.message,
+            });
+        }
+
+
+        // return success response
+        res.status(200).json({
+            success: true,
+            mesage: 'Password changed successfully'
+        });
     }
-    catch (err) {
 
+    catch (error) {
+        console.log('Error while changing passowrd');
+        console.log(error)
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            messgae: 'Error while changing passowrd'
+        })
     }
 }
