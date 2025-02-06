@@ -101,7 +101,6 @@ exports.createCourse = async (req, res) => {
     }
 }
 
-
 //get all courses
 exports.showAllCourse = async (req, res) => {
     try {
@@ -131,3 +130,4 @@ exports.showAllCourse = async (req, res) => {
         })
     }
 }
+
