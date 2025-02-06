@@ -1,6 +1,6 @@
 const Profile = require("../models/Profile");
 const User = require("../models/User");
-const Course = requier("../models/Course")
+const Course = require("../models/Course")
 
 exports.updateProfile = async (req, res) => {
     try {
